@@ -1,5 +1,6 @@
 module Main where
 
+import Strings
 import Parse
 
 main :: IO ()
