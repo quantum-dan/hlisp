@@ -32,14 +32,14 @@ inBetweenDual start end str = do
 inBetweenRem :: (Eq a) => a -> a -> [a] -> Maybe ([a], [a])
 inBetweenRem start end vals = case after start vals of
   Nothing -> Just ([], vals)
-  Just v -> inner start end v 1 []
+  Just v -> inner start end v 1 [start]
     where
       inner :: (Eq a) => a -> a -> [a] -> Int -> [a] -> Maybe ([a], [a])
       inner _ _ xs 0 accum = Just (accum, xs)
       inner _ _ [] _ _ = Nothing
       inner start end (x:xs) count accum
         | x == start = inner start end xs (count + 1) (accum ++ [x])
-        | x == end && count == 1 = Just (accum, xs)
+        | x == end && count == 1 = Just (accum ++ [x], xs)
         | x == end = inner start end xs (count - 1) (accum ++ [x])
         | otherwise = inner start end xs count (accum ++ [x])
 

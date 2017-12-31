@@ -122,7 +122,7 @@ parsers = [
 mkList :: String -> Maybe [String]
 mkList str = do
   all <- inBetween '(' ')' str
-  items <- groupBy (inBetweenDual '(' ')') all []
+  items <- groupBy (inBetweenDual '(' ')') (init $ tail all) []
   let separated = map (\val -> case val of
                           Left str -> split ' ' str
                           Right str -> [str]) items

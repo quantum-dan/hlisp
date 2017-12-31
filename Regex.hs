@@ -49,7 +49,7 @@ match m string@(s:str) = case m of
   Characters chars len -> if length result == len then Just (result, rest) else Nothing
     where (result, rest) = getAllIn string chars []
   MaybeNoneOf chars -> Just $ Regex.until chars string
-  NoneOf chars len -> if length result == len then Just (result, rest) else Nothing
+  NoneOf chars len -> if length result >= len then Just (take len result, drop len result) else Nothing
     where (result, rest) = Regex.until chars string
   SomeNoneOf chars -> case Regex.until chars string of
     ([], _) -> Nothing
