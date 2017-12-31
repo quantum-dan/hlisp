@@ -30,9 +30,8 @@ inBetweenDual start end str = do
           return (init, group, final)
 
 inBetweenRem :: (Eq a) => a -> a -> [a] -> Maybe ([a], [a])
-inBetweenRem start end vals = case after start vals of
-  Nothing -> Just ([], vals)
-  Just v -> inner start end v 1 [start]
+inBetweenRem start end vals = (after start vals) >>= \v ->
+  inner start end v 1 [start]
     where
       inner :: (Eq a) => a -> a -> [a] -> Int -> [a] -> Maybe ([a], [a])
       inner _ _ xs 0 accum = Just (accum, xs)

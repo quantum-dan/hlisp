@@ -2,39 +2,43 @@ module Parse where
 
 import Strings
 import Regex
-import Data.List (isPrefixOf)
+import Data.List (isPrefixOf, intercalate)
+
+data LP = LP (LispData -> LispData)
+instance Eq LP where
+  _ == _ = False
 
 data LispData =
   LispInt Integer
+  | LispPair LispData LispData
+  | LispUnit
   | LispString String
   | LispSymbol String
   | LispList [LispData]
   | LispFloat Double
   | LispFraction Integer Integer
-  | LispLambda (LispData -> LispData)
+  | LispLambda [String] LispData
   | LispDef String LispData
   | LispVar String
+  | LispError String
+  | LispPrimitive LP
+  deriving Eq
 
 instance Show LispData where
-  show (LispInt x) = "LispInt " ++ show x
-  show (LispString x) = "LispString " ++ x
-  show (LispSymbol x) = "LispSymbol " ++ x
-  show (LispList x) = "LispList " ++ show x
-  show (LispFloat x) = "LispFloat " ++ show x
-  show (LispFraction x y) = "LispFraction " ++ show x ++ "/" ++ show y
-  show (LispLambda _) = "LispLambda"
-  show (LispDef x y) = "LispDef " ++ x ++ " = " ++ show y
-  show (LispVar x) = "LispVar " ++ x
-
-instance Eq LispData where
-  LispInt x == LispInt y = x == y
-  LispString x == LispString y = x == y
-  LispSymbol x == LispSymbol y = x == y
-  LispList x == LispList y = x == y
-  LispFloat x == LispFloat y = x == y
-  LispFraction x1 x2 == LispFraction y1 y2 = (quot x1 x2) == (quot y1 y2)
-  LispVar x == LispVar y = x == y
-  _ == _ = False
+  show ld = case ld of
+    LispInt x -> show x
+    LispString x -> '"':x ++ "\""
+    LispSymbol x -> x
+    LispList xs -> '(':(intercalate " " $ map show xs) ++ ")"
+    LispFloat x -> show x
+    LispFraction x y -> show x ++ "/" ++ show y
+    LispLambda xs f -> "(lambda (" ++ (intercalate " " xs) ++ ") " ++ show f ++ ")"
+    LispDef x y -> "(def " ++ x ++ " " ++ show y ++ ")"
+    LispVar x -> x
+    LispError x -> "ERROR: " ++ x
+    LispUnit -> "'()"
+    LispPair x y -> "(" ++ show x ++ " . " ++ show y ++ ")"
+    LispPrimitive _ -> "Primitive function"
 
 digits = ['0'..'9']
 lowercase = ['a'..'z']
@@ -44,6 +48,9 @@ alphanumeric = digits ++ alpha
 everything = [' '..'~']
 
 type LispParser = String -> Maybe LispData
+
+lispUnit :: LispParser
+lispUnit str = regex [Start, Characters "'" 1, Characters "(" 1, Characters ")" 1, End] str >> return LispUnit
 
 lispInt :: LispParser
 lispInt str = do
@@ -63,7 +70,7 @@ lispSymbol str = do
 
 lispList :: LispParser
 lispList str = do
-  matched <- regex [Start, Characters "(" 1, MaybeCharacters everything, Characters ")" 1, End] str
+  matched <- regex [Start, SomeCharacters "(", MaybeCharacters everything, SomeCharacters ")", End] str
   strings <- mkList matched
   let parsed = map parse strings
   if filter isLeft parsed /= []
@@ -86,19 +93,22 @@ lispFraction str = do
   return $ LispFraction numer denom
 
 lispLambda :: LispParser
-lispLambda str
-  | length str > length "lambda" && isPrefixOf "lambda" str = return $ LispLambda (\x -> LispInt 43) -- not the answer
-  | otherwise = Nothing
+lispLambda str = do
+  items <- mkList str
+  if (length items == 3) && (items !! 0 == "lambda")
+    then do
+      varList <- mkList $ items !! 1
+      expr <- unEither $ parse $ items !! 2
+      return $ LispLambda varList expr
+    else Nothing
 
-lispDef str
-  | length str > length "def" && isPrefixOf "def" str = do
-      let items = split ' ' str
-      if length items >= 3
-        then do
-          expr <- unEither $ parse $ concat (tail $ tail items) -- after the first 2
-          return $ LispDef (items !! 1) expr
-        else Nothing
-  | otherwise = Nothing
+lispDef str = do
+  items <- mkList str
+  if (length items >= 3) && (items !! 0 == "def")
+    then do
+      expr <- unEither $ parse $ concat $ tail $ tail items
+      return $ LispDef (items !! 1) expr
+    else Nothing
 
 lispVar :: LispParser
 lispVar str = do
@@ -106,10 +116,11 @@ lispVar str = do
   return $ LispVar matched
 
 parsers :: [LispParser]
--- Order is significant!
+-- Order is significant!  They get checked for in the order that they are in the list.
 parsers = [
   lispDef,
   lispLambda,
+  lispUnit,
   lispSymbol,
   lispInt,
   lispString,
