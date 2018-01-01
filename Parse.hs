@@ -4,9 +4,28 @@ import Strings
 import Regex
 import Data.List (isPrefixOf, intercalate)
 
-data LP = LP (LispData -> LispData)
-instance Eq LP where
-  _ == _ = False
+data Primitive = LispAdd | LispMult | LispNegate | LispInvert | LispCons | LispCar | LispCdr
+  deriving Eq
+
+primList :: [Primitive]
+primList = [
+  LispAdd,
+  LispMult,
+  LispNegate,
+  LispInvert,
+  LispCons,
+  LispCar,
+  LispCdr
+           ]
+
+instance Show Primitive where
+  show LispAdd = "+"
+  show LispMult = "*"
+  show LispNegate = "negate"
+  show LispInvert = "invert"
+  show LispCons = "cons"
+  show LispCar = "car"
+  show LispCdr = "cdr"
 
 data LispData =
   LispInt Integer
@@ -21,7 +40,7 @@ data LispData =
   | LispDef String LispData
   | LispVar String
   | LispError String
-  | LispPrimitive LP
+  | LispPrimitive Primitive
   deriving Eq
 
 instance Show LispData where
@@ -38,7 +57,7 @@ instance Show LispData where
     LispError x -> "ERROR: " ++ x
     LispUnit -> "'()"
     LispPair x y -> "(" ++ show x ++ " . " ++ show y ++ ")"
-    LispPrimitive _ -> "Primitive function"
+    LispPrimitive p -> "Primitive " ++ show p
 
 digits = ['0'..'9']
 lowercase = ['a'..'z']
