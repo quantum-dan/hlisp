@@ -4,7 +4,7 @@ import Strings
 import Regex
 import Data.List (isPrefixOf, intercalate)
 
-data Primitive = LispAdd | LispMult | LispNegate | LispInvert | LispCons | LispCar | LispCdr
+data Primitive = LispAdd | LispMult | LispNegate | LispInvert | LispCons | LispCar | LispCdr | LispEq | LispIf
   deriving Eq
 
 primList :: [Primitive]
@@ -15,7 +15,9 @@ primList = [
   LispInvert,
   LispCons,
   LispCar,
-  LispCdr
+  LispCdr,
+  LispEq,
+  LispIf
            ]
 
 instance Show Primitive where
@@ -26,6 +28,8 @@ instance Show Primitive where
   show LispCons = "cons"
   show LispCar = "car"
   show LispCdr = "cdr"
+  show LispEq = "="
+  show LispIf = "if"
 
 data LispData =
   LispInt Integer
@@ -41,6 +45,7 @@ data LispData =
   | LispVar String
   | LispError String
   | LispPrimitive Primitive
+  | LispBool Bool
   deriving Eq
 
 instance Show LispData where
@@ -57,6 +62,8 @@ instance Show LispData where
     LispError x -> "ERROR: " ++ x
     LispUnit -> "'()"
     LispPair x y -> "(" ++ show x ++ " . " ++ show y ++ ")"
+    LispBool True -> "#t"
+    LispBool False -> "#f"
     LispPrimitive p -> "Primitive " ++ show p
 
 digits = ['0'..'9']
@@ -70,6 +77,14 @@ type LispParser = String -> Maybe LispData
 
 lispUnit :: LispParser
 lispUnit str = regex [Start, Characters "'" 1, Characters "(" 1, Characters ")" 1, End] str >> return LispUnit
+
+lispBool :: LispParser
+lispBool str = do
+  matched <- regex [Start, Characters "#" 1, Characters "tf" 1, End] str
+  let val = case (last matched) of
+        't' -> True
+        'f' -> False
+  return $ LispBool val
 
 lispInt :: LispParser
 lispInt str = do
@@ -146,6 +161,7 @@ parsers = [
   lispFloat,
   lispFraction,
   lispList,
+  lispBool,
   lispVar
           ]
 
