@@ -1,0 +1,12 @@
+; Demo of this Lisp interpreter (this is a comment)
+; Variables, pairs, booleans
+(def pair (cons 2 #t))
+; Lists (also using cons), strings, symbols
+(def list (cons 2 3 #t #f "hello" 'symbol))
+; Getting stuff out of lists
+(def first (car list))
+(def second (car (cdr list)))
+; And the end result (also if statements)
+(if (= first second)
+    (cons first #t)
+    (cons second #f))

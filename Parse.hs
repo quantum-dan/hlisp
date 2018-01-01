@@ -48,6 +48,14 @@ data LispData =
   | LispBool Bool
   deriving Eq
 
+showPair' :: LispData -> String
+showPair' (LispPair x LispUnit) = show x
+showPair' (LispPair x lp@(LispPair _ _)) = show x ++ " " ++ showPair' lp
+showPair' (LispPair x y) = show x ++ " . " ++ show y
+
+showPair :: LispData -> String
+showPair lp = '(':(showPair' lp) ++ ")"
+
 instance Show LispData where
   show ld = case ld of
     LispInt x -> show x
@@ -61,7 +69,7 @@ instance Show LispData where
     LispVar x -> x
     LispError x -> "ERROR: " ++ x
     LispUnit -> "'()"
-    LispPair x y -> "(" ++ show x ++ " . " ++ show y ++ ")"
+    lp@(LispPair _ _) -> showPair lp
     LispBool True -> "#t"
     LispBool False -> "#f"
     LispPrimitive p -> "Primitive " ++ show p
@@ -167,12 +175,15 @@ parsers = [
 
 mkList :: String -> Maybe [String]
 mkList str = do
-  all <- inBetween '(' ')' str
+  all <- inBetween '(' ')' $ cleanUp str
   items <- groupBy (inBetweenDual '(' ')') (init $ tail all) []
   let separated = map (\val -> case val of
                           Left str -> split ' ' str
                           Right str -> [str]) items
   return $ filter (/= []) $ concat separated
+
+cleanUp :: String -> String
+cleanUp = concat . filter (\x -> not (";" `isPrefixOf` x)) . (split '\n') . (intercalate " ") . (filter (/= [])) . (split ' ') . filter (/= '\t')
 
 isLeft :: Either a b -> Bool
 isLeft (Left _) = True
