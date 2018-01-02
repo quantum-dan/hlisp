@@ -39,7 +39,7 @@ The following primitive functions are defined:
 * `*`: multiplies the arguments (at least two, variable-length); if integers and floats are multiplied, it will cast integers to floats
 * `negate`: negates a single number
 * `invert`: inverts a single number
-* `cons`: makes two arguments into a pair; if applied to more than two arguments, it will make them into nested pairs, with the final argument paired with `'()` (unit), making a linked list
+* `cons`: makes two arguments into a pair; if applied to more than two arguments, it will make them into nested pairs, with the final argument paired with `unit`, making a linked list
 * `car`: first element of a pair
 * `cdr`: second element of a pair
 * `=`: tests the arguments for equality (variable-length)

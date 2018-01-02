@@ -68,7 +68,7 @@ instance Show LispData where
     LispDef x y -> "(def " ++ x ++ " " ++ show y ++ ")"
     LispVar x -> x
     LispError x -> "ERROR: " ++ x
-    LispUnit -> "'()"
+    LispUnit -> "unit"
     lp@(LispPair _ _) -> showPair lp
     LispBool True -> "#t"
     LispBool False -> "#f"
@@ -84,7 +84,7 @@ everything = [' '..'~']
 type LispParser = String -> Maybe LispData
 
 lispUnit :: LispParser
-lispUnit str = regex [Start, Characters "'" 1, Characters "(" 1, Characters ")" 1, End] str >> return LispUnit
+lispUnit str = if str == "unit" then Just LispUnit else Nothing
 
 lispBool :: LispParser
 lispBool str = do
