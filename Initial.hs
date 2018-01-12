@@ -28,6 +28,7 @@ instance Eq LispData where
 
 showPair :: LispData -> String
 showPair (LispPair x lp@(LispPair _ _)) = (show x) ++ " " ++ (showPair lp)
+showPair (LispPair x LispUnit) = show x
 showPair (LispPair x y) = (show x) ++ " . " ++ (show y)
 showPair _ = "not a pair"
 

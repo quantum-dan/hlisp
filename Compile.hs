@@ -56,8 +56,8 @@ toHaskell ld = case ld of
   LispList (x:xs) -> Pieces $ [Piece "apply", toHaskell x, Piece $ showPiecesList $ map toHaskell xs]
   LispFloat x -> Piece $ "LispFloat " ++ show x
   LispFraction x y -> Piece $ "LispFraction " ++ show x ++ " " ++ show y
-  LispLambda [] body -> Pieces [Piece "LispLambda", Piece "\\_ -> ", toHaskell body]
-  LispLambda args body -> Pieces [Piece "LispLambda", Piece $ "\\[" ++ (intercalate "," args) ++ "] -> ", toHaskell body]
+  LispLambda [] body -> Pieces [Piece "LispLambda $", Piece "\\_ -> ", toHaskell body]
+  LispLambda args body -> Pieces [Piece "LispLambda $", Piece $ "\\[" ++ (intercalate "," args) ++ "] -> ", toHaskell body]
   LispDef var body -> Piece $ "let " ++ var ++ " = " ++ show (toHaskell body)
   LispVar var -> case getPrim var of
     Just prim -> toHaskell $ LispPrimitive prim
