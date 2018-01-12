@@ -1,4 +1,12 @@
-module Parse where
+module Parse
+  (
+    Primitive (..),
+    primList,
+    LispData (..),
+    mkList,
+    parse,
+    cleanUp
+  ) where
 
 import Strings
 import Regex

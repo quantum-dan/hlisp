@@ -1,4 +1,10 @@
-module Interpret where
+module Interpret
+  (
+    Environment (..),
+    Env (..),
+    run,
+    interpret
+  ) where
 
 import Parse
 import Primitives

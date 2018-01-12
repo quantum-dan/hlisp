@@ -4,11 +4,23 @@ import Parse
 import Interpret
 import Primitives (primitives)
 import Data.List (isPrefixOf)
-import System.IO (readFile)
+import System.IO (readFile, writeFile)
 import System.Environment (getArgs)
+import Compile
 
 main :: IO ()
 main = runFromArgs
+
+compile :: String -> String -> IO (Either String String)
+compile inPath outPath = do
+  input <- readFile inPath
+  let input' = cleanUp input
+  let input'' = if "((" `isPrefixOf` input' then input' else "(" ++ input' ++ ")"
+  let result = Compile.compile input''
+  case result of
+    Left _ -> return ()
+    Right haskData -> writeFile outPath haskData
+  return (result >> return ("Successfully compiled " ++ inPath ++ " to " ++ outPath))
 
 exec :: String -> Env -> Maybe (Environment Env)
 exec string env = do
@@ -41,6 +53,17 @@ runFromArgs = do
     [fn] -> runFile fn >>= putStrLn
     "-e":[code] -> putStrLn $ runString code
     "-l":[fn] -> loadFile fn
+    "-c":[fn] -> do
+      result <- Main.compile fn $ fn ++ ".hs"
+      case result of
+        Left err -> putStrLn err
+        Right s -> putStrLn s
+    "-o":out:"-c":[fn] -> do
+      result <- Main.compile fn out
+      case result of
+        Left err -> putStrLn err
+        Right s -> putStrLn s
+    _ -> putStrLn infoStr
 
 loadFile :: String -> IO ()
 loadFile fn = do
@@ -64,7 +87,9 @@ infoStr =
   "lisp -h|<filename>|-e [code]\n" ++
   "HLisp: Haskell Lisp interpreter\n" ++
   "Options:\n" ++
-  "\t-h\t\tDisplay this help menu\n" ++
-  "\t<filename>\tExecute the given file\n" ++
-  "\t-e <code>\tExecute the given code" ++
+  "\t-h\t\t\t\tDisplay this help menu\n" ++
+  "\t<filename>\t\t\tExecute the given file\n" ++
+  "\t-e <code>\t\t\tExecute the given code\n" ++
+  "\t-o <outfile> -c <infile>\tCompile infile to outfile\n" ++
+  "\t-c <file>\t\t\tCompile infile to infile.hs\n" ++
   "\t Default: launches REPL"
